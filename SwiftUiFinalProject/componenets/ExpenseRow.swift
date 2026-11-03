@@ -28,5 +28,5 @@ struct ExpenseRow: View {
 }
 
 #Preview {
-    ExpenseRow(expense: Expense.init(name: "ბილიარდი", amount: 12, category: "სპორტი", date: "04.01.2026"))
+    ExpenseRow(expense: Expense.init(name: "ბილიარდი", amount: 12.00, category: "სპორტი", date: "04.01.2026"))
 }

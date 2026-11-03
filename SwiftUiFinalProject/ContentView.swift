@@ -57,10 +57,6 @@ func formatAmount(_ amount: Double) -> String {
     String(format: "%.2f ₾", amount)
 }
 
-func formatDate(_ date: Date) -> String {
-    date.formatted(.dateTime.day().month(.wide).locale(Locale(identifier: "ka_GE")))
-}
-
 #Preview("ხარჯებით") {
     ContentView()
 }
