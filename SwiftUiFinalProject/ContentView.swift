@@ -8,10 +8,11 @@
 import SwiftUI
 
 struct ContentView: View {
-    let expenses: [Expense]
+    @State private var expenses: [Expense]
+    @State private var isAddingExpense = false
     
     init(expenses: [Expense] = Expense.sampleData) {
-        self.expenses = expenses
+        _expenses = State(initialValue: expenses)
     }
     
     private var totalAmount: Double {
@@ -47,6 +48,20 @@ struct ContentView: View {
                 }
             }
             .navigationTitle("ჩემი ბიუჯეტი")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        isAddingExpense = true
+                    } label: {
+                        Label("ხარჯის დამატება", systemImage: "plus")
+                    }
+                }
+            }
+            .sheet(isPresented: $isAddingExpense) {
+                AddExpenseView { expense in
+                    expenses.append(expense)
+                }
+            }
         }
     }
 }
