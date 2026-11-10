@@ -6,46 +6,40 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ContentView: View {
-    @State private var expenses: [Expense]
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \Expense.date, order: .reverse) private var expenses: [Expense]
     @State private var isAddingExpense = false
+    @State private var selectedCategory: ExpenseCategory?
+    @State private var saveErrorMessage: String?
     
-    init(expenses: [Expense] = Expense.sampleData) {
-        _expenses = State(initialValue: expenses)
-    }
-    
-    private var totalAmount: Double {
-        expenses.reduce(0) { $0 + $1.amount }
+    private var filteredExpenses: [Expense] {
+        expenses.filtered(by: selectedCategory)
     }
     
     var body: some View {
         NavigationStack {
             List {
                 Section {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("ამ თვის ხარჯი")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        Text("ჯამი: \(formatAmount(totalAmount))")
-                            .font(.title.bold())
-                    }
-                    .padding(.vertical, 4)
+                    TotalSummaryView(
+                        title: selectedCategory?.rawValue ?? "ყველა ხარჯი",
+                        total: filteredExpenses.totalAmount
+                    )
                 }
                 
-                Section("ხარჯები") {
-                    if expenses.isEmpty {
-                        ContentUnavailableView(
-                            "ხარჯები არ არის",
-                            systemImage: "tray",
-                            description: Text("ჯერ არცერთი ხარჯი არ დაგიმატებიათ.")
-                        )
-                    } else {
-                        ForEach(expenses) { expense in
-                            ExpenseRow(expense: expense)
-                        }
-                    }
+                Section {
+                    CategoryFilterBar(selectedCategory: $selectedCategory)
                 }
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
+                
+                ExpenseListSection(
+                    expenses: filteredExpenses,
+                    hasAnyExpenses: !expenses.isEmpty,
+                    selectedCategory: selectedCategory
+                )
             }
             .navigationTitle("ჩემი ბიუჯეტი")
             .toolbar {
@@ -58,24 +52,39 @@ struct ContentView: View {
                 }
             }
             .sheet(isPresented: $isAddingExpense) {
-                AddExpenseView { expense in
-                    expenses.append(expense)
+                AddExpenseSheet { expense in
+                    addExpense(expense)
                 }
             }
+            .alert(
+                "შენახვა ვერ მოხერხდა",
+                isPresented: Binding(
+                    get: { saveErrorMessage != nil },
+                    set: { if !$0 { saveErrorMessage = nil } }
+                )
+            ) {
+                Button("კარგი", role: .cancel) {}
+            } message: {
+                Text(saveErrorMessage ?? "")
+            }
+        }
+    }
+    
+    private func addExpense(_ expense: Expense) {
+        do {
+            try modelContext.addExpense(expense)
+        } catch {
+            saveErrorMessage = "ხარჯის შენახვისას მოხდა შეცდომა. სცადეთ თავიდან."
         }
     }
 }
 
-
-
-func formatAmount(_ amount: Double) -> String {
-    String(format: "%.2f ₾", amount)
-}
-
 #Preview("ხარჯებით") {
     ContentView()
+        .modelContainer(Expense.previewContainer)
 }
 
 #Preview("ცარიელი სია") {
-    ContentView(expenses: [])
+    ContentView()
+        .modelContainer(for: Expense.self, inMemory: true)
 }

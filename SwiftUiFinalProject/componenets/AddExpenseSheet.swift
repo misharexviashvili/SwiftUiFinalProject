@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct AddExpenseView: View {
+struct AddExpenseSheet: View {
     @Environment(\.dismiss) private var dismiss
     
     let onSave: (Expense) -> Void
@@ -17,12 +17,6 @@ struct AddExpenseView: View {
     @State private var category: ExpenseCategory = .food
     @State private var date = Date()
     @State private var errorMessage: String?
-    
-    private static let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd.MM.yyyy"
-        return formatter
-    }()
     
     var body: some View {
         NavigationStack {
@@ -91,39 +85,22 @@ struct AddExpenseView: View {
     }
     
     private func save() {
-        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedName.isEmpty else {
-            errorMessage = "გთხოვთ, შეიყვანოთ ხარჯის დასახელება."
-            return
+        switch ExpenseValidator.validate(name: name, amountText: amountText) {
+        case .success(let input):
+            let expense = Expense(
+                name: input.name,
+                amount: input.amount,
+                category: category.rawValue,
+                date: date
+            )
+            onSave(expense)
+            dismiss()
+        case .failure(let error):
+            errorMessage = error.message
         }
-        
-        let normalizedAmount = amountText
-            .trimmingCharacters(in: .whitespaces)
-            .replacingOccurrences(of: ",", with: ".")
-        guard !normalizedAmount.isEmpty else {
-            errorMessage = "გთხოვთ, შეიყვანოთ თანხა."
-            return
-        }
-        guard let amount = Double(normalizedAmount), amount.isFinite else {
-            errorMessage = "თანხა უნდა იყოს რიცხვი, მაგ. 12.50"
-            return
-        }
-        guard amount > 0 else {
-            errorMessage = "თანხა უნდა იყოს ნულზე მეტი."
-            return
-        }
-        
-        let expense = Expense(
-            name: trimmedName,
-            amount: amount,
-            category: category.rawValue,
-            date: Self.dateFormatter.string(from: date)
-        )
-        onSave(expense)
-        dismiss()
     }
 }
 
 #Preview {
-    AddExpenseView { _ in }
+    AddExpenseSheet { _ in }
 }

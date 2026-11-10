@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ExpenseRow: View {
     let expense: Expense
@@ -15,7 +16,7 @@ struct ExpenseRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(expense.name)
                     .font(.headline)
-                Text(expense.date)
+                Text("\(expense.category) · \(formatDate(expense.date))")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -28,5 +29,6 @@ struct ExpenseRow: View {
 }
 
 #Preview {
-    ExpenseRow(expense: Expense.init(name: "ბილიარდი", amount: 12.00, category: "სპორტი", date: "04.01.2026"))
+    ExpenseRow(expense: Expense(name: "ბილიარდი", amount: 12.00, category: ExpenseCategory.entertainment.rawValue, date: .now))
+        .modelContainer(Expense.previewContainer)
 }
